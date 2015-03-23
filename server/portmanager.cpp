@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #include "bsdport.h"
 #include "linuxport.h"
 #include "pcapport.h"
+#include "dpdkport.h"
 #include "winpcapport.h"
 
 PortManager *PortManager::instance_ = NULL;
@@ -36,17 +37,18 @@ PortManager::PortManager()
     pcap_if_t *device;
     char errbuf[PCAP_ERRBUF_SIZE];
 
-    qDebug("Retrieving the device list from the local machine\n"); 
+    qDebug("Retrieving the device list from the local machine\n");
 
-    if (pcap_findalldevs(&deviceList, errbuf) == -1)
+    if(pcap_findalldevs(&deviceList, errbuf) == -1)
         qDebug("Error in pcap_findalldevs_ex: %s\n", errbuf);
 
     for(device = deviceList, i = 0; device != NULL; device = device->next, i++)
     {
         AbstractPort *port;
-      
+
         qDebug("%d. %s", i, device->name);
-        if (device->description)
+
+        if(device->description)
             qDebug(" (%s)\n", device->description);
 
 #if defined(Q_OS_WIN32)
@@ -59,10 +61,10 @@ PortManager::PortManager()
         port = new PcapPort(i, device->name);
 #endif
 
-        if (!port->isUsable())
+        if(!port->isUsable())
         {
             qDebug("%s: unable to open %s. Skipping!", __FUNCTION__,
-                    device->name);
+                   device->name);
             delete port;
             i--;
             continue;
@@ -73,22 +75,54 @@ PortManager::PortManager()
 
     pcap_freealldevs(deviceList);
 
+    int nPorts = dpdk_get_port_count();
+    qDebug("Found %u DPDK devices", nPorts);
+
+    int portId = 0;
+
+    for(; portId < nPorts; ++portId, ++i)
+    {
+        AbstractPort *port = NULL;
+
+        qDebug("Add port #%d", i);
+
+        char devName[256] = {0};
+
+        if(!dpdk_get_dev_name(portId, devName))
+        {
+            //Skip port without name
+            continue;
+        }
+
+        port = new DPDKPort(i, portId, devName);
+
+        if(!port->isUsable())
+        {
+            qWarning("%s: unable to open %s. Skipping!", __FUNCTION__,
+                     device->name);
+            delete port;
+            continue;
+        }
+
+        portList_.append(port);
+    }
+
     foreach(AbstractPort *port, portList_)
+    {
         port->init();
-    
-    return;
+    }
 }
 
 PortManager::~PortManager()
 {
-    while (!portList_.isEmpty())
+    while(!portList_.isEmpty())
         delete portList_.takeFirst();
 }
 
 PortManager* PortManager::instance()
 {
-    if (!instance_)
+    if(!instance_)
         instance_ = new PortManager;
 
-    return instance_;       
+    return instance_;
 }

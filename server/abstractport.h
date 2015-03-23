@@ -82,7 +82,7 @@ public:
             int length) = 0;
     virtual void setPacketListLoopMode(bool loop, 
             quint64 secDelay, quint64 nsecDelay) = 0;
-    void updatePacketList();
+    virtual void updatePacketList();
 
     virtual void startTransmit() = 0;
     virtual void stopTransmit() = 0;
@@ -111,7 +111,7 @@ protected:
     struct PortStats    stats_;
     //! \todo Need lock for stats access/update
 
-private:
+protected:
     bool    isSendQueueDirty_;
 
     static const int kMaxPktSize = 16384;

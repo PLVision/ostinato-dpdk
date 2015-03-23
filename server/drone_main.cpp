@@ -29,6 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #include <signal.h>
 #endif
 
+#include "dpdk_api.h"
+
 extern ProtocolManager *OstProtocolManager;
 extern char *version;
 extern char *revision;
@@ -43,6 +45,8 @@ void cleanup(int /*signum*/)
 int main(int argc, char *argv[])
 {
     int exitCode = 0;
+    dpdk_init(argc, argv);
+
     QCoreApplication app(argc, argv);
     Drone *drone = new Drone();
     OstProtocolManager = new ProtocolManager();
@@ -54,7 +58,7 @@ int main(int argc, char *argv[])
     // -h (--help)
     // -p (--portnum)
     if (argc > 1)
-        myport = atoi(argv[1]);
+        myport = atoi(argv[2]);
 
     if (!drone->init())
     {

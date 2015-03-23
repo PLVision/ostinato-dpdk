@@ -23,6 +23,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>
 #include <QList>
 #include "abstractport.h"
 
+class DPDKAdapter;
+
 class PortManager
 {
 public:
@@ -33,7 +35,7 @@ public:
     AbstractPort* port(int id) { return portList_[id]; }
 
     static PortManager* instance();
-
+	
 private:
     QList<AbstractPort*>    portList_;
 
