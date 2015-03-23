@@ -1,0 +1,3 @@
+[submodule "dpdkadapter"]
+	path = dpdkadapter
+	url = https://github.com/plvisiondevs/dpdkadapter.git
